@@ -1,21 +1,20 @@
 const hre = require("hardhat");
 const tokenContractJSON = require("../artifacts/contracts/MyNFT.sol/MyNFT.json");
 
-const tokenAddress = "0x4b28297797019aCdcA1BB68b7F21e6BC1A2bfeBE"; // place your erc721 contract address here
+const tokenAddress = "0xC47aFa82bCCa4947fBcF7E426010f3fe49Da1F40"; // place your erc721 contract address here [sepolia]
+// const tokenAddress = "0x33DC8165dCF51be9726A0FAD4643aa8780dAB6c9"; // place your erc721 contract address here [amoy]
 const tokenABI = tokenContractJSON.abi;
-const walletAddress = "0xf773B5bB9844516A49375d17cD6592784C32d0c1"; // place your public address for your wallet here
+const walletAddress = "0x064bC27579E1641B7e0A50e4F53fce125807e717"; // place your public address for your wallet here
 
 async function main() {
-
-    const myContract = await hre.ethers.getContractAt(tokenABI, tokenAddress);
-    const count = await myContract.balanceOf(walletAddress); // It will return number of NFTs in wallet
-
-    console.log("You now have: " + count.toString() + " NFTs in your Wallet!");
-  }
-  
-  // We recommend this pattern to be able to use async/await everywhere
-  // and properly handle errors.
-  main().catch((error) => {
+  try {
+    const token = await hre.ethers.getContractAt(tokenABI, tokenAddress);
+    const balance = await token.balanceOf(walletAddress);
+    console.log(`You now have: ${balance} NFTs in your wallet`);
+  } catch (error) {
     console.error(error);
     process.exitCode = 1;
-  });
+  }
+}
+
+main();

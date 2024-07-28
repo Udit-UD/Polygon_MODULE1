@@ -2,45 +2,49 @@ const hre = require("hardhat");
 const fxRootContractABI = require("../fxRootContractABI.json");
 const tokenContractJSON = require("../artifacts/contracts/MyNFT.sol/MyNFT.json");
 
-const tokenAddress = "0x5ddF5B40e6880fa07cFd58626D6cCC15D04409c2"; 
+const tokenAddress = "0xC47aFa82bCCa4947fBcF7E426010f3fe49Da1F40";
 const tokenABI = tokenContractJSON.abi;
-const fxERC721RootAddress = "0xF9bc4a80464E48369303196645e876c8C7D972de";
-const walletAddress = "0xf773B5bB9844516A49375d17cD6592784C32d0c1"; 
-
+const FxERC721RootTunnel = "0x9E688939Cb5d484e401933D850207D6750852053";
+const walletAddress = "0x064bC27579E1641B7e0A50e4F53fce125807e717";
 
 async function main() {
+  try {
+    const tokenContract = await hre.ethers.getContractAt(
+      tokenABI,
+      tokenAddress
+    );
+    const fxContract = await hre.ethers.getContractAt(
+      fxRootContractABI,
+      FxERC721RootTunnel
+    );
 
-    const myNFTContract = await hre.ethers.getContractAt(tokenABI, tokenAddress);
-    const fxContract = await hre.ethers.getContractAt(fxRootContractABI, fxERC721RootAddress);
-    const transferNFTs = 3;
+    const tokenIds = [0, 1, 2];
 
-    for (let i = 0; i < transferNFTs; i++) {
+    const approveTx = await tokenContract.setApprovalForAll(
+      FxERC721RootTunnel,
+      true
+    );
+    await approveTx.wait();
+    console.log("Approval confirmed");
 
-      const tokenID = await myNFTContract.tokenOfOwnerByIndex(walletAddress, i);
-      // Approve the FxPortal Bridge to transfer the NFT on your behalf
-
-      const approveTx = await myNFTContract.approve(fxERC721RootAddress, tokenID);
-      await approveTx.wait();
-  
-      console.log('Approval confirmed for NFT with Token ID:', tokenID.toString());
-  
-      // Deposit the NFT to the FxPortal Bridge
+    for (let i = 0; i < tokenIds.length; i++) {
       const depositTx = await fxContract.deposit(
         tokenAddress,
         walletAddress,
-        tokenID,
+        tokenIds[i],
         "0x6556"
       );
       await depositTx.wait();
-  
-      console.log("NFT with Token ID:", tokenID.toString(), "deposited to the FxPortal Bridge");
+      console.log(`Token with ID ${tokenIds[i]} deposited`);
     }
-  
-  }
-  
-  // We recommend this pattern to be able to use async/await everywhere
-  // and properly handle errors.
-  main().catch((error) => {
+
+    // Test balanceOf
+    const balance = await tokenContract.balanceOf(walletAddress);
+    console.log(`You now have: ${balance} NFTs in your wallet`);
+  } catch (error) {
     console.error(error);
     process.exitCode = 1;
-  });
+  }
+}
+
+main();
